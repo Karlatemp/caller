@@ -52,7 +52,10 @@ public class CallerFinder {
                 "io.github.karlatemp.caller.CallerThreadTrace",
         }) {
             CallerImplement ci = allocate(path);
-            if (ci != null) implement = ci;
+            if (ci != null) {
+                implement = ci;
+                break;
+            }
         }
         if (implement == null)
             System.err.println("No any implement for CallerFinder");
