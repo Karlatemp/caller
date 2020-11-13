@@ -8,6 +8,8 @@
 
 plugins {
     id 'java'
+    id 'com.jfrog.bintray'
+    id "maven-publish"
 }
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_1_10

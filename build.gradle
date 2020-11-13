@@ -41,7 +41,6 @@ compileJava {
 }
 allprojects {
     afterEvaluate {
-        def tmpName = project.name.replace("-", "")
         def proj = project
         task sourcesJar(type: Jar, dependsOn: classes) {
             classifier = 'sources'
@@ -52,11 +51,11 @@ allprojects {
             user = project.findProperty("bintray.user") ?: System.getenv("USERNAME")
             println("user is $user")
             key = project.findProperty('bintray.key') ?: System.getenv("TOKEN")
-            publications = ['mavenPublication_' + tmpName]
+            publications = ['mavenPublication']
 
             pkg {
                 repo = 'misc'
-                name = project.name
+                name = proj.name
                 licenses = ['MIT']
                 vcsUrl = 'https://github.com/Karlatemp/caller.git'
                 version {
@@ -69,7 +68,7 @@ allprojects {
 
         publishing {
             publications {
-                register("mavenPublication_" + tmpName, MavenPublication.class) {
+                register("mavenPublication", MavenPublication.class) {
                     artifactId(proj.name)
                     from(proj.components.java)
                     artifact sourcesJar
@@ -84,6 +83,15 @@ allprojects {
                             }
                         }
                     }
+                    pom.withXml {
+                        Node pomNode = asNode()
+                        pomNode.dependencies.'*'.findAll() {
+                            it.groupId.text() == 'org.jetbrains.kotlin'
+                        }.each() {
+                            it.parent().remove(it)
+                        }
+                    }
+                    // org.jetbrains.kotlin
                 }
             }
         }
