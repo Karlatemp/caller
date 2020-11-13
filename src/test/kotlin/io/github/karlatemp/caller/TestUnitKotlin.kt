@@ -26,15 +26,15 @@ internal class TestUnitKotlin {
             assertSame(CallerFinder.getCaller(2).classInstance, W2::class.java, "$type - [C9]")
             assertSame(CallerFinder.getCaller(3).classInstance, W3::class.java, "$type - [C9]")
             CallerFinder.setImplement(c8)
-            assertSame(CallerFinder.getCaller().classInstance, W1::class.java, "$type - [C9]")
-            assertSame(CallerFinder.getCaller(1).classInstance, W1::class.java, "$type - [C9]")
-            assertSame(CallerFinder.getCaller(2).classInstance, W2::class.java, "$type - [C9]")
-            assertSame(CallerFinder.getCaller(3).classInstance, W3::class.java, "$type - [C9]")
+            assertSame(CallerFinder.getCaller().classInstance, W1::class.java, "$type - [C8]")
+            assertSame(CallerFinder.getCaller(1).classInstance, W1::class.java, "$type - [C8]")
+            assertSame(CallerFinder.getCaller(2).classInstance, W2::class.java, "$type - [C8]")
+            assertSame(CallerFinder.getCaller(3).classInstance, W3::class.java, "$type - [C8]")
             CallerFinder.setImplement(ctt)
-            assertSame(CallerFinder.getCaller().className, W1::class.java.name, "$type - [C9]")
-            assertSame(CallerFinder.getCaller(1).className, W1::class.java.name, "$type - [C9]")
-            assertSame(CallerFinder.getCaller(2).className, W2::class.java.name, "$type - [C9]")
-            assertSame(CallerFinder.getCaller(3).className, W3::class.java.name, "$type - [C9]")
+            assertSame(CallerFinder.getCaller().className, W1::class.java.name, "$type - [CTT]")
+            assertSame(CallerFinder.getCaller(1).className, W1::class.java.name, "$type - [CTT]")
+            assertSame(CallerFinder.getCaller(2).className, W2::class.java.name, "$type - [CTT]")
+            assertSame(CallerFinder.getCaller(3).className, W3::class.java.name, "$type - [CTT]")
         }
     }
 
