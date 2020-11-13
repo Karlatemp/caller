@@ -1,0 +1,91 @@
+/*
+ * Copyright (c) 2018-2020 Karlatemp. All rights reserved.
+ * @author Karlatemp <karlatemp@vip.qq.com> <https://github.com/Karlatemp>
+ * @create 2020/11/13 19:41:01
+ *
+ * caller/build.gradle
+ */
+
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+    id 'com.jfrog.bintray' version '1.8.5'
+    id("maven-publish")
+}
+
+allprojects {
+    group 'io.github.karlatemp'
+    version '1.0.0'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+dependencies {
+    compile project(':caller-api')
+    compile project(':caller-java8')
+    compile project(':caller-java9')
+    compile project(':caller-java10')
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    testCompile "org.jetbrains.kotlin:kotlin-stdlib"
+    testCompile "org.jetbrains.kotlin:kotlin-reflect"
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit5"
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+allprojects {
+    afterEvaluate {
+        def tmpName = project.name.replace("-", "")
+        def proj = project
+        task sourcesJar(type: Jar, dependsOn: classes) {
+            classifier = 'sources'
+            from sourceSets.main.allSource
+        }
+
+        bintray {
+            user = project.findProperty("bintray.user") ?: System.getenv("USERNAME")
+            println("user is $user")
+            key = project.findProperty('bintray.key') ?: System.getenv("TOKEN")
+            publications = ['mavenPublication_' + tmpName]
+
+            pkg {
+                repo = 'misc'
+                name = project.name
+                licenses = ['MIT']
+                vcsUrl = 'https://github.com/Karlatemp/caller.git'
+                version {
+                    name = project.version
+                    desc = project.version
+                    released = new Date()
+                }
+            }
+        }
+
+        publishing {
+            publications {
+                register("mavenPublication_" + tmpName, MavenPublication.class) {
+                    artifactId(proj.name)
+                    from(proj.components.java)
+                    artifact sourcesJar
+                    pom {
+                        name = 'Caller - ' + proj.name
+                        description = 'Unsafe accessing library'
+                        url = 'https://github.com/Karlatemp/caller'
+                        licenses {
+                            license {
+                                name = 'MIT License'
+                                url = 'https://spdx.org/licenses/MIT.html'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

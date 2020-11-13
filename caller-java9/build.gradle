@@ -1,0 +1,20 @@
+/*
+ * Copyright (c) 2018-2020 Karlatemp. All rights reserved.
+ * @author Karlatemp <karlatemp@vip.qq.com> <https://github.com/Karlatemp>
+ * @create 2020/11/13 19:41:01
+ *
+ * caller/build.gradle
+ */
+
+plugins {
+    id 'java'
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_9
+    targetCompatibility = JavaVersion.VERSION_1_9
+}
+
+dependencies {
+    compile project(':caller-api')
+}
