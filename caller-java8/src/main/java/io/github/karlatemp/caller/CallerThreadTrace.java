@@ -8,7 +8,9 @@
 
 package io.github.karlatemp.caller;
 
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class CallerThreadTrace implements CallerImplement {
@@ -16,15 +18,34 @@ class CallerThreadTrace implements CallerImplement {
 
     @Override
     public StackFrame getCaller() {
-        return process(1);
+        return (StackFrame) process(1, true);
     }
 
     @Override
     public StackFrame getCaller(int frame) {
-        return process(frame);
+        return (StackFrame) process(frame, true);
     }
 
-    private StackFrame process(int frame) {
+    @Override
+    public List<StackFrame> getTrack() {
+        return (List<StackFrame>) process(0, false);
+    }
+
+    private static final Function<StackTraceElement, StackFrame> FWX = trace -> new StackFrame(
+            trace.getClassName(),
+            null,
+            trace.getFileName(),
+            trace.getMethodName(),
+            trace.getLineNumber(),
+            -1,
+            trace.isNativeMethod(),
+            null,
+            null,
+            trace,
+            MF_STE
+    );
+
+    private Object process(int frame, boolean unique) {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         // java.base/java.lang.Thread.getStackTrace(Thread.java:1598)
         // io.github.karlatemp.caller.CallerThreadTrace.process(CallerThreadTrace.java:16)
@@ -33,23 +54,11 @@ class CallerThreadTrace implements CallerImplement {
         // io.github.karlatemp.caller.TestUnit.test(TestUnit.java:15)
         // io.github.karlatemp.caller.TestUnit$W.a(TestUnit.java:32)
         // io.github.karlatemp.caller.TestUnit.main(TestUnit.java:22)
-        return Stream.of(stackTrace)
+        Stream<StackTraceElement> stream = Stream.of(stackTrace)
                 .filter(trace -> ReflectionHelper.isNotReflectionClass(trace.getClassName()))
-                .skip(4 + frame)
-                .findFirst()
-                .map(trace -> new StackFrame(
-                        trace.getClassName(),
-                        null,
-                        trace.getFileName(),
-                        trace.getMethodName(),
-                        trace.getLineNumber(),
-                        -1,
-                        trace.isNativeMethod(),
-                        null,
-                        null,
-                        trace,
-                        MF_STE
-                ))
-                .orElse(null);
+                .skip(4 + frame);
+        if (unique)
+            return stream.findFirst().map(FWX).orElse(null);
+        return stream.map(FWX).collect(Collectors.toList());
     }
 }

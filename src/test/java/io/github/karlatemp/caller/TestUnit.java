@@ -13,6 +13,9 @@ import org.junit.Test;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("TrivialFunctionalExpressionUsage")
 public class TestUnit {
@@ -21,22 +24,40 @@ public class TestUnit {
     private static final CallerThreadTrace ctt = new CallerThreadTrace();
     private static final MethodHandles.Lookup lk = MethodHandles.lookup();
 
+    private static List<?> awx(List<StackFrame> stackFrames) {
+        return stackFrames.stream()
+                .limit(5)
+                .map(frame -> frame.getClassInstance() == null ? frame.getClassName() : frame.getClassInstance())
+                .collect(Collectors.toList());
+    }
+
     public static void run(String type) {
         CallerFinder.setImplement(c9);
         Assert.assertSame("CL 9 - " + type, CallerFinder.getCaller().getClassInstance(), Wp1.class);
         Assert.assertSame("CL 9 - " + type, CallerFinder.getCaller(1).getClassInstance(), Wp1.class);
         Assert.assertSame("CL 9 - " + type, CallerFinder.getCaller(2).getClassInstance(), Wp2.class);
         Assert.assertSame("CL 9 - " + type, CallerFinder.getCaller(3).getClassInstance(), Wp3.class);
+        Assert.assertEquals("CL 9 - ", awx(CallerFinder.getTrace()), Arrays.asList(TestUnit.class, Wp1.class, Wp2.class, Wp3.class, TestUnit.class));
         CallerFinder.setImplement(c8);
         Assert.assertSame("CL 8 - " + type, CallerFinder.getCaller().getClassInstance(), Wp1.class);
         Assert.assertSame("CL 8 - " + type, CallerFinder.getCaller(1).getClassInstance(), Wp1.class);
         Assert.assertSame("CL 8 - " + type, CallerFinder.getCaller(2).getClassInstance(), Wp2.class);
         Assert.assertSame("CL 8 - " + type, CallerFinder.getCaller(3).getClassInstance(), Wp3.class);
+        Assert.assertEquals("CL 8 - ", awx(CallerFinder.getTrace()), Arrays.asList(TestUnit.class, Wp1.class, Wp2.class, Wp3.class, TestUnit.class));
         CallerFinder.setImplement(ctt);
-        Assert.assertSame("CL TT- " + type, CallerFinder.getCaller().getClassName(), Wp1.class.getName());
-        Assert.assertSame("CL TT- " + type, CallerFinder.getCaller(1).getClassName(), Wp1.class.getName());
-        Assert.assertSame("CL TT- " + type, CallerFinder.getCaller(2).getClassName(), Wp2.class.getName());
-        Assert.assertSame("CL TT- " + type, CallerFinder.getCaller(3).getClassName(), Wp3.class.getName());
+        Assert.assertEquals("CL TT- " + type, CallerFinder.getCaller().getClassName(), Wp1.class.getName());
+        Assert.assertEquals("CL TT- " + type, CallerFinder.getCaller(1).getClassName(), Wp1.class.getName());
+        Assert.assertEquals("CL TT- " + type, CallerFinder.getCaller(2).getClassName(), Wp2.class.getName());
+        Assert.assertEquals("CL TT- " + type, CallerFinder.getCaller(3).getClassName(), Wp3.class.getName());
+        Assert.assertEquals("CL TT- ", awx(CallerFinder.getTrace()),
+                Arrays.asList(
+                        TestUnit.class.getName(),
+                        Wp1.class.getName(),
+                        Wp2.class.getName(),
+                        Wp3.class.getName(),
+                        TestUnit.class.getName()
+                )
+        );
     }
 
     interface Wfk {

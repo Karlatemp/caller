@@ -8,7 +8,9 @@
 
 package io.github.karlatemp.caller;
 
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class Caller8 extends SecurityManager implements CallerImplement {
@@ -24,33 +26,42 @@ class Caller8 extends SecurityManager implements CallerImplement {
 
     @Override
     public StackFrame getCaller() {
-        return box(cl(1));
+        return (StackFrame) box(cl(1, true));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<StackFrame> getTrack() {
+        return (List<StackFrame>) box(cl(0, false));
     }
 
     @Override
     public StackFrame getCaller(int frame) {
-        return box(cl(frame));
+        return (StackFrame) box(cl(frame, true));
     }
 
-    private static StackFrame box(Class<?> c) {
+    private static final Function<Object, Object> BOX = Caller8::box;
+
+    private static Object box(Object c) {
         if (c == null) return null;
-        return new StackFrame(c.getName(), c, null, null, -1, -1, false, null, null, c, TF.INSTANCE);
+        if (c instanceof Class) {
+            return new StackFrame(((Class<?>) c).getName(), (Class<?>) c, null, null, -1, -1, false, null, null, c, TF.INSTANCE);
+        }
+        return ((Stream<?>) c).map(BOX).collect(Collectors.toList());
     }
 
-    private Class<?> cl(int frame) {
+    private Object cl(int frame, boolean unique) {
         int c = 0;
         Class<?>[] context = this.getClassContext();
-        /*for (Class<?> ck : context) {
-            System.out.println((c++) + "\t= " + ck.getName());
-        }*/
         int pos = 3 + frame;
         //System.out.println(" == " + pos);
         if (pos >= 0) {
-            return Stream.of(context)
+            Stream<Class<?>> stream = Stream.of(context)
                     .filter(ReflectionHelper::isNotReflectionClass)
-                    .skip(pos)
-                    .findFirst()
-                    .orElse(null);
+                    .skip(pos);
+            if (unique)
+                return stream.findFirst().orElse(null);
+            return stream;
         }
         return null;
     }

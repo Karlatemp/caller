@@ -13,6 +13,7 @@ import java.util.function.Function;
 class Stack10 implements Function<StackWalker.StackFrame, StackFrame> {
     @Override
     public StackFrame apply(StackWalker.StackFrame stackFrame) {
+        if (stackFrame == null) return null;
         return new StackFrame(
                 stackFrame.getClassName(),
                 stackFrame.getDeclaringClass(),

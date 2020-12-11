@@ -9,6 +9,7 @@
 package io.github.karlatemp.caller;
 
 import java.lang.reflect.Constructor;
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class CallerFinder {
@@ -31,6 +32,10 @@ public class CallerFinder {
 
     public static StackFrame getCaller(int frame) {
         return implement.getCaller(frame);
+    }
+
+    public static List<StackFrame> getTrace() {
+        return implement.getTrack();
     }
 
     private static CallerImplement allocate(String klass) {

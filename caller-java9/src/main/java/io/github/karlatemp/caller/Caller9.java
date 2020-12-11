@@ -9,7 +9,9 @@
 package io.github.karlatemp.caller;
 
 import java.lang.reflect.Constructor;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
@@ -38,38 +40,46 @@ class Caller9 implements CallerImplement {
 
     @Override
     public StackFrame getCaller() {
-        return walker.walk(new CLG(1));
+        return (StackFrame) walker.walk(new CLG(1, true));
     }
 
-    private static class CLG implements Function<Stream<StackWalker.StackFrame>, StackFrame> {
-        private final int frame;
+    @Override
+    public List<StackFrame> getTrack() {
+        return (List<StackFrame>) walker.walk(new CLG(0, false));
+    }
 
-        public CLG(int frame) {
+    private static class CLG implements Function<Stream<StackWalker.StackFrame>, Object> {
+        private final int frame;
+        private final boolean unique;
+
+        public CLG(int frame, boolean unique) {
             this.frame = frame;
+            this.unique = unique;
         }
 
         @Override
-        public StackFrame apply(Stream<StackWalker.StackFrame> stream) {
+        public Object apply(Stream<StackWalker.StackFrame> stream) {
             // io.github.karlatemp.caller.Caller9.getCaller(Caller9.java:37)
             // io.github.karlatemp.caller.Caller9.getCaller(Caller9.java:18)
             // io.github.karlatemp.caller.CallerFinder.getCaller(CallerFinder.java:18)
             // io.github.karlatemp.caller.TestUnit9.a(TestUnit9.java:11)
             // io.github.karlatemp.caller.TestUnit9.main(TestUnit9.java:6)
-            StackWalker.StackFrame frame = stream
+            Stream<StackWalker.StackFrame> streamX = stream
                     .filter(stackFrame -> ReflectionHelper.isNotReflectionClass(
                             stackFrame.getDeclaringClass()
                     ))
-                    .skip(2 + this.frame)
-                    .findFirst()
-                    .orElse(null);
-            if (frame == null) return null;
-            return stackX.apply(frame);
+                    .skip(2 + this.frame);
+            if (unique) {
+                return stackX.apply(streamX.findFirst().orElse(null));
+            } else {
+                return streamX.map(stackX).collect(Collectors.toList());
+            }
         }
     }
 
     @Override
     public StackFrame getCaller(int frame) {
-        return walker.walk(new CLG(frame));
+        return (StackFrame) walker.walk(new CLG(frame, true));
     }
 
 }

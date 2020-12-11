@@ -9,6 +9,8 @@
 package io.github.karlatemp.caller;
 
 
+import java.util.List;
+
 /**
  * Internal api / implement
  */
@@ -17,4 +19,6 @@ public interface CallerImplement {
     StackFrame getCaller();
 
     StackFrame getCaller(int frame);
+
+    List<StackFrame> getTrack();
 }
