@@ -8,8 +8,6 @@
 
 plugins {
     id 'java'
-    id 'com.jfrog.bintray'
-    id "maven-publish"
 }
 
 compileJava {

@@ -9,13 +9,19 @@
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.4.10'
-    id 'com.jfrog.bintray' version '1.8.5'
+    id 'io.github.karlatemp.publication-sign' version '1.0.0'
     id("maven-publish")
+}
+
+publicationSign {
+    setupWorkflow { workflow ->
+        workflow.fastSetup("keys/key.pub", "keys/key.pri")
+    }
 }
 
 allprojects {
     group 'io.github.karlatemp'
-    version '1.1.0'
+    version '1.1.1'
 
     repositories {
         mavenLocal()
@@ -36,62 +42,89 @@ dependencies {
 }
 
 compileJava {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_1_10
+    targetCompatibility = JavaVersion.VERSION_1_10
 }
-allprojects {
+
+def proj = project
+
+task javadocJar(type: Jar) {
+    archiveClassifier.set("javadoc")
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+}
+
+subprojects {
     afterEvaluate {
-        def proj = project
-        task sourcesJar(type: Jar, dependsOn: classes) {
-            classifier = 'sources'
-            from sourceSets.main.allSource
+        rootProject.tasks.sourcesJar { Jar task ->
+            task.from sourceSets.main.allSource
         }
+    }
+}
 
-        bintray {
-            user = project.findProperty("bintray.user") ?: System.getenv("USERNAME")
-            println("user is $user")
-            key = project.findProperty('bintray.key') ?: System.getenv("TOKEN")
-            publications = ['mavenPublication']
+jar {
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
 
-            pkg {
-                repo = 'misc'
-                name = proj.name
-                licenses = ['MIT']
-                vcsUrl = 'https://github.com/Karlatemp/caller.git'
-                version {
-                    name = project.version
-                    desc = project.version
-                    released = new Date()
+tasks.whenTaskAdded { task ->
+    if (task instanceof GenerateModuleMetadata) {
+        task.enabled = false
+    }
+}
+
+publishing {
+    repositories {
+        try {
+            property('sonatype.user')
+            property('sonatype.key')
+
+            maven { MavenArtifactRepository repo ->
+                repo.name = "MavenCentral"
+
+                repo.setUrl('https://oss.sonatype.org/service/local/staging/deploy/maven2')
+
+                repo.credentials {
+                    username(property('sonatype.user'))
+                    password(property('sonatype.key'))
                 }
             }
+        } catch (MissingPropertyException ignored) {
         }
+    }
 
-        publishing {
-            publications {
-                register("mavenPublication", MavenPublication.class) {
-                    artifactId(proj.name)
-                    from(proj.components.java)
-                    artifact sourcesJar
-                    pom {
-                        name = 'Caller - ' + proj.name
-                        description = 'Unsafe accessing library'
-                        url = 'https://github.com/Karlatemp/caller'
-                        licenses {
-                            license {
-                                name = 'MIT License'
-                                url = 'https://spdx.org/licenses/MIT.html'
-                            }
-                        }
+    publications {
+        register("mavenPublication", MavenPublication.class) {
+            it.groupId(proj.group.toString())
+            it.artifactId(proj.name)
+            it.artifact jar
+            it.artifact sourcesJar
+            it.artifact javadocJar
+            it.pom { pom ->
+                name = 'Caller Finder'
+                description = 'Caller Finder'
+                url = 'https://github.com/Karlatemp/caller'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://spdx.org/licenses/MIT.html'
                     }
-                    pom.withXml {
-                        Node pomNode = asNode()
-                        pomNode.dependencies.'*'.findAll() {
-                            it.groupId.text() == 'org.jetbrains.kotlin'
-                        }.each() {
-                            it.parent().remove(it)
-                        }
+                }
+                pom.scm {
+                    url.set('https://github.com/Karlatemp/caller')
+                    connection.set('scm:https://github.com/Karlatemp/caller.git')
+                    developerConnection.set('scm:git://github.com/Karlatemp/caller.git')
+                }
+
+                pom.developers {
+                    developer {
+                        id.set('Karlatemp')
+                        name.set('Karlatemp')
+                        email.set('karlatemp@vip.qq.com')
                     }
-                    // org.jetbrains.kotlin
                 }
             }
         }
